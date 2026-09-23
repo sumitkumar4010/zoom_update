@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { connectToDatabase } from '@/lib/db';
+import { connectDB } from '@/lib/db';
 import Job from '@/models/Job';
 
 // Single Job Get karna
@@ -8,7 +8,7 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    await connectToDatabase();
+    await connectDB();
     const job = await Job.findById(params.id);
     if (!job) {
       return NextResponse.json({ success: false, message: 'Job not found' }, { status: 404 });
@@ -25,7 +25,7 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
-    await connectToDatabase();
+    await connectDB();
     const body = await req.json();
     const updatedJob = await Job.findByIdAndUpdate(params.id, body, {
       new: true,
@@ -48,7 +48,7 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    await connectToDatabase();
+    await connectDB();
     const deletedJob = await Job.findByIdAndDelete(params.id);
 
     if (!deletedJob) {
