@@ -1,15 +1,16 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 import { connectDB } from '@/lib/db';
 import Job from '@/models/Job';
 
 // Single Job Get karna
 export async function GET(
-  req: Request,
-  { params }: { params: { id: string } }
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await connectDB();
-    const job = await Job.findById(params.id);
+    const { id } = await params;
+    const job = await Job.findById(id);
     if (!job) {
       return NextResponse.json({ success: false, message: 'Job not found' }, { status: 404 });
     }
@@ -21,13 +22,14 @@ export async function GET(
 
 // Job Update (Edit) karna
 export async function PUT(
-  req: Request,
-  { params }: { params: { id: string } }
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await connectDB();
+    const { id } = await params;
     const body = await req.json();
-    const updatedJob = await Job.findByIdAndUpdate(params.id, body, {
+    const updatedJob = await Job.findByIdAndUpdate(id, body, {
       new: true,
       runValidators: true,
     });
@@ -44,12 +46,13 @@ export async function PUT(
 
 // Job Delete karna
 export async function DELETE(
-  req: Request,
-  { params }: { params: { id: string } }
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await connectDB();
-    const deletedJob = await Job.findByIdAndDelete(params.id);
+    const { id } = await params;
+    const deletedJob = await Job.findByIdAndDelete(id);
 
     if (!deletedJob) {
       return NextResponse.json({ success: false, message: 'Job not found' }, { status: 404 });
