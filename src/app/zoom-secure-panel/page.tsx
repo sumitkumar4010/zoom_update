@@ -18,8 +18,10 @@ export interface JobPost {
     totalPost: string;
     eligibility: string;
     applyLink: string;
+    loginLink?: string;
     notificationLink: string;
     officialWebsite: string;
+    syllabusLink?: string;
 }
 
 const getTodayDate = () => new Date().toISOString().split('T')[0];
@@ -38,33 +40,29 @@ const INITIAL_FORM_DATA: JobPost = {
     totalPost: '',
     eligibility: '',
     applyLink: '',
+    loginLink: '',
     notificationLink: '',
     officialWebsite: '',
+    syllabusLink: '',
 };
 
 export default function SecretAdminPanel() {
-    // Auth State
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [loginError, setLoginError] = useState('');
     const [loginLoading, setLoginLoading] = useState(false);
 
-    // Active Tab State
     const [activeTab, setActiveTab] = useState<'create' | 'manage'>('create');
-
-    // Jobs State
     const [jobs, setJobs] = useState<JobPost[]>([]);
     const [editingJobId, setEditingJobId] = useState<string | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
     const [isFetchingJobs, setIsFetchingJobs] = useState(false);
 
-    // Form State
     const [formData, setFormData] = useState<JobPost>(INITIAL_FORM_DATA);
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState('');
 
-    // Fetch Posts from API
     const fetchJobs = async () => {
         setIsFetchingJobs(true);
         try {
@@ -86,7 +84,6 @@ export default function SecretAdminPanel() {
         }
     }, [isAuthenticated]);
 
-    // Handle Auth Login
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoginError('');
@@ -122,7 +119,6 @@ export default function SecretAdminPanel() {
         setFormData((prev) => ({ ...prev, [name]: value }));
     };
 
-    // Create or Update Job Post
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
@@ -156,7 +152,6 @@ export default function SecretAdminPanel() {
         }
     };
 
-    // Populate Data into Form for Editing
     const handleEdit = (job: JobPost) => {
         const id = job._id || job.id;
         if (!id) return;
@@ -166,7 +161,6 @@ export default function SecretAdminPanel() {
         setMessage('');
     };
 
-    // Delete Job Post
     const handleDelete = async (id: string) => {
         if (!confirm('Are you sure you want to delete this job post?')) return;
 
@@ -249,7 +243,6 @@ export default function SecretAdminPanel() {
     return (
         <div className="min-h-screen bg-gray-100 text-gray-900 pb-12">
             <main className="max-w-5xl mx-auto px-4 py-8">
-                {/* Header Navbar */}
                 <div className="flex flex-col sm:flex-row justify-between items-center mb-6 bg-white p-4 rounded-lg shadow-sm border border-gray-200 gap-4">
                     <h1 className="text-lg font-bold text-gray-800">FastJob Management Panel</h1>
                     <div className="flex items-center gap-2">
@@ -315,7 +308,7 @@ export default function SecretAdminPanel() {
                         </div>
 
                         <form onSubmit={handleSubmit} className="p-6 space-y-6">
-                            {/* Basic Details */}
+                            {/* 1. Basic Details */}
                             <div className="space-y-4">
                                 <h3 className="text-sm font-bold text-red-600 uppercase border-b pb-1">
                                     1. Basic Job Details
@@ -328,7 +321,7 @@ export default function SecretAdminPanel() {
                                         value={formData.title}
                                         onChange={handleChange}
                                         required
-                                        placeholder="e.g. Bihar Police SI Online Form 2026"
+                                        placeholder="e.g. Railway RRB Group D Online Form 2026"
                                         className="w-full border border-gray-300 rounded p-2 text-sm focus:outline-none focus:border-red-500"
                                     />
                                 </div>
@@ -342,12 +335,15 @@ export default function SecretAdminPanel() {
                                             onChange={handleChange}
                                             className="w-full border border-gray-300 rounded p-2 text-sm focus:outline-none focus:border-red-500 bg-white"
                                         >
-                                            <option value="top-banner">🔥 Top Banner Link</option>
-                                            <option value="latest-jobs">Latest Jobs</option>
-                                            <option value="admit-card">Admit Card</option>
-                                            <option value="result">Result</option>
-                                            <option value="syllabus">Syllabus</option>
-                                            <option value="admission">Admission</option>
+                                            
+                                            <option value="top-banner">🔥Top Banner Link</option>
+                                            <option value="latest-jobs">💼Latest Jobs</option>
+                                            <option value="admit-card">🎴Admit Card</option>
+                                            <option value="result">📊Result</option>
+                                            <option value="answer-key">🔑Answer Key</option>
+                                            <option value="syllabus">📚Syllabus</option>
+                                            <option value="admission">🎓Admission</option>
+                                            <option value="scholarship">🎓 Scholarship & Schemes</option>
                                         </select>
                                     </div>
                                     <div>
@@ -357,17 +353,17 @@ export default function SecretAdminPanel() {
                                             name="department"
                                             value={formData.department}
                                             onChange={handleChange}
-                                            placeholder="e.g. BPSSC Bihar"
+                                            placeholder="e.g. Government Recruitment Examination 2026"
                                             className="w-full border border-gray-300 rounded p-2 text-sm"
                                         />
                                     </div>
                                 </div>
                             </div>
 
-                            {/* Dates & Fees */}
+                            {/* 2. Dates, Fees & Posts */}
                             <div className="space-y-4 pt-2">
                                 <h3 className="text-sm font-bold text-red-600 uppercase border-b pb-1">
-                                    2. Dates & Fees
+                                    2. Dates, Fees & Age Limit
                                 </h3>
                                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                     <div>
@@ -381,7 +377,7 @@ export default function SecretAdminPanel() {
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-xs font-bold text-gray-700 mb-1">Apply Start</label>
+                                        <label className="block text-xs font-bold text-gray-700 mb-1">Apply Start Date</label>
                                         <input
                                             type="date"
                                             name="applyStartDate"
@@ -404,43 +400,79 @@ export default function SecretAdminPanel() {
 
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div>
-                                        <label className="block text-xs font-bold text-gray-700 mb-1">Fee (General / OBC)</label>
+                                        <label className="block text-xs font-bold text-gray-700 mb-1">Fee (General / EBC / BC / EWS)</label>
                                         <input
                                             type="text"
                                             name="feeGeneral"
                                             value={formData.feeGeneral}
                                             onChange={handleChange}
-                                            placeholder="700"
+                                            placeholder="e.g. Rs.500/-"
                                             className="w-full border border-gray-300 rounded p-2 text-sm"
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-xs font-bold text-gray-700 mb-1">Fee (SC / ST)</label>
+                                        <label className="block text-xs font-bold text-gray-700 mb-1">Fee (SC / ST / All Female)</label>
                                         <input
                                             type="text"
                                             name="feeSCST"
                                             value={formData.feeSCST}
                                             onChange={handleChange}
-                                            placeholder="400"
+                                            placeholder="e.g. Rs.200/-"
+                                            className="w-full border border-gray-300 rounded p-2 text-sm"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-700 mb-1">Minimum Age</label>
+                                        <input
+                                            type="text"
+                                            name="ageMin"
+                                            value={formData.ageMin}
+                                            onChange={handleChange}
+                                            placeholder="18 Years"
+                                            className="w-full border border-gray-300 rounded p-2 text-sm"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-700 mb-1">Maximum Age</label>
+                                        <input
+                                            type="text"
+                                            name="ageMax"
+                                            value={formData.ageMax}
+                                            onChange={handleChange}
+                                            placeholder="37 Years"
+                                            className="w-full border border-gray-300 rounded p-2 text-sm"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-700 mb-1">Total Post</label>
+                                        <input
+                                            type="text"
+                                            name="totalPost"
+                                            value={formData.totalPost}
+                                            onChange={handleChange}
+                                            placeholder="e.g. N/A or 5000"
                                             className="w-full border border-gray-300 rounded p-2 text-sm"
                                         />
                                     </div>
                                 </div>
                             </div>
 
-                            {/* Eligibility & Links */}
+                            {/* 3. Links & Details */}
                             <div className="space-y-4 pt-2">
                                 <h3 className="text-sm font-bold text-red-600 uppercase border-b pb-1">
                                     3. Links & Details
                                 </h3>
                                 <div>
-                                    <label className="block text-xs font-bold text-gray-700 mb-1">Eligibility</label>
+                                    <label className="block text-xs font-bold text-gray-700 mb-1">Eligibility Details</label>
                                     <textarea
                                         name="eligibility"
                                         rows={2}
                                         value={formData.eligibility}
                                         onChange={handleChange}
-                                        placeholder="Graduation in any stream..."
+                                        placeholder="10th Pass / Graduation in any stream..."
                                         className="w-full border border-gray-300 rounded p-2 text-sm"
                                     />
                                 </div>
@@ -453,19 +485,58 @@ export default function SecretAdminPanel() {
                                             name="applyLink"
                                             value={formData.applyLink}
                                             onChange={handleChange}
+                                            placeholder="https://..."
                                             className="w-full border border-gray-300 rounded p-2 text-sm"
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-xs font-bold text-gray-700 mb-1">Notification Link</label>
+                                        <label className="block text-xs font-bold text-gray-700 mb-1">Applicant Login Link</label>
+                                        <input
+                                            type="url"
+                                            name="loginLink"
+                                            value={formData.loginLink || ''}
+                                            onChange={handleChange}
+                                            placeholder="https://..."
+                                            className="w-full border border-gray-300 rounded p-2 text-sm"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-700 mb-1">Download Notification Link</label>
                                         <input
                                             type="url"
                                             name="notificationLink"
                                             value={formData.notificationLink}
                                             onChange={handleChange}
+                                            placeholder="https://..."
                                             className="w-full border border-gray-300 rounded p-2 text-sm"
                                         />
                                     </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-700 mb-1">Official Website Link</label>
+                                        <input
+                                            type="url"
+                                            name="officialWebsite"
+                                            value={formData.officialWebsite}
+                                            onChange={handleChange}
+                                            placeholder="https://..."
+                                            className="w-full border border-gray-300 rounded p-2 text-sm"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-700 mb-1">Download Syllabus Link</label>
+                                    <input
+                                        type="url"
+                                        name="syllabusLink"
+                                        value={formData.syllabusLink || ''}
+                                        onChange={handleChange}
+                                        placeholder="https://..."
+                                        className="w-full border border-gray-300 rounded p-2 text-sm"
+                                    />
                                 </div>
                             </div>
 
@@ -491,7 +562,7 @@ export default function SecretAdminPanel() {
                     </div>
                 )}
 
-                {/* TAB 2: MANAGE POSTS (EDIT / DELETE) */}
+                {/* TAB 2: MANAGE POSTS */}
                 {activeTab === 'manage' && (
                     <div className="bg-white rounded-lg shadow-md border border-gray-200 p-6">
                         <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-3">
@@ -535,15 +606,15 @@ export default function SecretAdminPanel() {
                                                     <td className="p-3 text-right space-x-2">
                                                         <button
                                                             onClick={() => handleEdit(job)}
-                                                            className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-3 py-1.5 rounded transition cursor-pointer text-xs"
+                                                            className="text-blue-600 hover:underline font-semibold"
                                                         >
-                                                            ✏️ Edit
+                                                            Edit
                                                         </button>
                                                         <button
                                                             onClick={() => handleDelete(id)}
-                                                            className="bg-red-600 hover:bg-red-700 text-white font-bold px-3 py-1.5 rounded transition cursor-pointer text-xs"
+                                                            className="text-red-600 hover:underline font-semibold"
                                                         >
-                                                            🗑️ Delete
+                                                            Delete
                                                         </button>
                                                     </td>
                                                 </tr>

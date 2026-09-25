@@ -23,6 +23,7 @@ export interface IJob extends Document {
   totalPost?: string;
   eligibility?: string;
   applyLink?: string;
+  loginLink?: string;            // Bas login link job ke hisab se badlega
   notificationLink?: string;
   officialWebsite?: string;
   isTrending?: boolean;
@@ -45,6 +46,7 @@ const JobSchema: Schema = new Schema(
     totalPost: { type: String },
     eligibility: { type: String },
     applyLink: { type: String },
+    loginLink: { type: String },
     notificationLink: { type: String },
     officialWebsite: { type: String },
     isTrending: { type: Boolean, default: false },

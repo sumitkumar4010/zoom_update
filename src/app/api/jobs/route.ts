@@ -1,28 +1,22 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
+import { connectDB } from '@/lib/db';
+import Job from '@/models/Job';
 
-// GET Handler - Job Posts & Flash Notices fetch karne ke liye
+// GET Handler - Database se saare posts fetch karne ke liye
 export async function GET(req: Request) {
     try {
-        const { searchParams } = new URL(req.url);
-        const isFlash = searchParams.get('flash') === 'true';
-
-        // TODO: Is jagah apne Database/MongoDB se jobs fetch karein.
-        // Abhi ke liye sample data return kar rahe hain taaki crash na ho:
-        const sampleJobs = [
-            {
-                _id: '1',
-                title: '🔥 Bihar Police SI Bharti 2026 Online Form Started',
-                category: 'top-banner',
-                applyLink: '',
-            },
-        ];
+        await connectDB();
+        
+        // Database se saari jobs fetch hongi (newest first)
+        const jobs = await Job.find({}).sort({ createdAt: -1 }).lean();
 
         return NextResponse.json({
             success: true,
-            data: sampleJobs,
+            data: jobs,
         });
     } catch (error) {
+        console.error('Fetch Jobs Error:', error);
         return NextResponse.json(
             { success: false, message: 'Failed to fetch jobs', data: [] },
             { status: 500 }
@@ -30,7 +24,7 @@ export async function GET(req: Request) {
     }
 }
 
-// POST Handler - Sirf Admin ke liye Admin Job Posting
+// POST Handler - Database me new job save karne ke liye
 export async function POST(req: Request) {
     // Session Cookie Check
     const cookieStore = await cookies();
@@ -44,15 +38,39 @@ export async function POST(req: Request) {
     }
 
     try {
+        await connectDB();
         const body = await req.json();
-        
-        // TODO: Yahan aapka Database/MongoDB entry logic aayega
-        console.log('Creating job post:', body);
 
-        return NextResponse.json({ success: true, message: 'Job created successfully' });
-    } catch (error) {
+        // 1. Title se Automatic Slug Generator
+        if (!body.slug && body.title) {
+            body.slug = body.title
+                .toLowerCase()
+                .trim()
+                .replace(/[^\w\s-]/g, '')
+                .replace(/[\s_-]+/g, '-')
+                .replace(/^-+|-+$/g, '');
+        }
+
+        // 2. Duplicate Slug Handle karne ke liye Timestamp add kar do
+        if (body.slug) {
+            const existingJob = await Job.findOne({ slug: body.slug });
+            if (existingJob) {
+                body.slug = `${body.slug}-${Date.now()}`;
+            }
+        }
+
+        // 3. Database me Entry Save karo
+        const newJob = await Job.create(body);
+
+        return NextResponse.json({ 
+            success: true, 
+            message: 'Job created successfully',
+            data: newJob 
+        });
+    } catch (error: any) {
+        console.error('Create Job Error:', error);
         return NextResponse.json(
-            { success: false, message: 'Failed to create job post' },
+            { success: false, message: error.message || 'Failed to create job post' },
             { status: 500 }
         );
     }
