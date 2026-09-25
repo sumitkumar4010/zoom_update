@@ -333,7 +333,7 @@ export default async function JobDetailPage({
               {/* Follow Us On Instagram */}
               <div className="grid grid-cols-2 text-center items-center">
                 <span className="border-r-2 border-yellow-500 py-3 px-2 text-gray-900 flex items-center justify-center gap-2">
-                  Follow Us On <FaInstagram className="text-white bg-gradient-to-tr from-amber-500 via-rose-500 to-purple-600 p-1 rounded-lg text-xl" /> Instagram
+                  Follow Us On <FaInstagram className="text-white bg-linear-to-tr from-amber-500 via-rose-500 to-purple-600 p-1 rounded-lg text-xl" /> Instagram
                 </span>
                 <div className="py-3 px-2">
                   <a href={INSTAGRAM_URL} target="_blank" rel="noopener noreferrer" className="text-[#581c87] hover:underline font-bold block">
