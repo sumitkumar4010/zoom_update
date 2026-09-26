@@ -3,54 +3,108 @@ import mongoose, { Schema, Document } from 'mongoose';
 export interface IJob extends Document {
   title: string;
   slug: string;
-  category:
-    | 'latest-jobs'
-    | 'admit-card'
-    | 'result'
-    | 'syllabus'
-    | 'admission'
-    | 'flash-banner'
-    | 'top-banner'
-    | 'top-update';
-  department?: string;
-  postDate?: string;
+  organization?: string;
+  postName?: string;
+  category?: string;
+  jobType?: string;
+  jobLocation?: string;
+  totalVacancy?: string;
+  notificationDate?: string;
   applyStartDate?: string;
   applyEndDate?: string;
+  feePaymentLastDate?: string;
+  correctionLastDate?: string;
+  examDate?: string;
+  admitCardDate?: string;
+  resultDate?: string;
   feeGeneral?: string;
   feeSCST?: string;
+  feeEWS?: string;
+  feeMode?: string;
+  educationalQualification?: string;
   ageMin?: string;
   ageMax?: string;
-  totalPost?: string;
-  eligibility?: string;
+  ageRelaxation?: string;
+  salaryPayScale?: string;
+  gradePay?: string;
+  experienceRequired?: string;
+  selectionProcess?: string;
+  vacancies?: Array<{
+    categoryName?: string;
+    ur?: string;
+    obc?: string;
+    sc?: string;
+    st?: string;
+    ews?: string;
+    total?: string;
+  }>;
+  thumbnailUrl?: string;
+  notificationPdfUrl?: string;
+  howToApply?: string;
   applyLink?: string;
-  loginLink?: string;            // Bas login link job ke hisab se badlega
-  notificationLink?: string;
   officialWebsite?: string;
-  isTrending?: boolean;
-  isFlashBanner?: boolean;
+  notificationLink?: string;
+  syllabusLink?: string;
+  admitCardLink?: string;
+  answerKeyLink?: string;
+  resultLink?: string;
+  seoTitle?: string;
+  metaDescription?: string;
 }
 
-const JobSchema: Schema = new Schema(
+const JobSchema = new Schema<IJob>(
   {
     title: { type: String, required: true },
     slug: { type: String, required: true, unique: true },
-    category: { type: String, required: true },
-    department: { type: String },
-    postDate: { type: String },
-    applyStartDate: { type: String },
-    applyEndDate: { type: String },
-    feeGeneral: { type: String },
-    feeSCST: { type: String },
-    ageMin: { type: String },
-    ageMax: { type: String },
-    totalPost: { type: String },
-    eligibility: { type: String },
-    applyLink: { type: String },
-    loginLink: { type: String },
-    notificationLink: { type: String },
-    officialWebsite: { type: String },
-    isTrending: { type: Boolean, default: false },
-    isFlashBanner: { type: Boolean, default: false },
+    organization: String,
+    postName: String,
+    category: String,
+    jobType: String,
+    jobLocation: String,
+    totalVacancy: String,
+    notificationDate: String,
+    applyStartDate: String,
+    applyEndDate: String,
+    feePaymentLastDate: String,
+    correctionLastDate: String,
+    examDate: String,
+    admitCardDate: String,
+    resultDate: String,
+    feeGeneral: String,
+    feeSCST: String,
+    feeEWS: String,
+    feeMode: String,
+    educationalQualification: String,
+    ageMin: String,
+    ageMax: String,
+    ageRelaxation: String,
+    salaryPayScale: String,
+    gradePay: String,
+    experienceRequired: String,
+    selectionProcess: String,
+    vacancies: [
+      {
+        categoryName: String,
+        ur: String,
+        obc: String,
+        sc: String,
+        st: String,
+        ews: String,
+        total: String,
+      },
+    ],
+    thumbnailUrl: String,
+    notificationPdfUrl: String,
+    howToApply: String,
+    applyLink: String,
+    officialWebsite: String,
+    notificationLink: String,
+    syllabusLink: String,
+    admitCardLink: String,
+    answerKeyLink: String,
+    resultLink: String,
+    seoTitle: String,
+    metaDescription: String,
   },
   { timestamps: true }
 );

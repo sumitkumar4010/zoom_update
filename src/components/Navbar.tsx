@@ -14,7 +14,7 @@ export default function Navbar() {
     { name: 'Result', href: '/category/result' },
     { name: 'Syllabus', href: '/category/syllabus' },
     { name: 'Admission', href: '/category/admission' },
-    { name: 'Contact Us', href: '/contact' },
+    { name: 'Contact Us', href: '/contact-us' },
   ];
 
   return (

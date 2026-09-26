@@ -1,70 +1,157 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
+
+export interface VacancyBreakdown {
+    postNameZone: string;
+    ur: string;
+    obc: string;
+    sc: string;
+    st: string;
+    ews: string;
+    total: string;
+}
 
 export interface JobPost {
     _id?: string;
     id?: string;
     title: string;
+    organization: string;
+    postName: string;
     category: string;
-    department: string;
-    postDate: string;
+    jobType: string;
+    jobLocation: string;
+    totalVacancy: string;
+    
+    notificationDate: string;
     applyStartDate: string;
     applyEndDate: string;
+    feePaymentLastDate: string;
+    correctionLastDate: string;
+    examDate: string;
+    admitCardDate: string;
+    resultDate: string;
+
     feeGeneral: string;
     feeSCST: string;
+    feeEWS: string;
+    feeMode: string;
+
+    educationalQualification: string;
     ageMin: string;
     ageMax: string;
-    totalPost: string;
-    eligibility: string;
+    ageRelaxation: string;
+
+    salaryPayScale: string;
+    gradePay: string;
+    experienceRequired: string;
+    selectionProcess: string;
+
+    vacancies: VacancyBreakdown[];
+
+    thumbnailUrl: string;
+    notificationPdfUrl: string;
+
+    howToApply: string;
     applyLink: string;
-    loginLink?: string;
-    notificationLink: string;
     officialWebsite: string;
+    notificationLink: string;
     syllabusLink?: string;
+    admitCardLink?: string;
+    answerKeyLink?: string;
+    resultLink?: string;
+
+    seoTitle: string;
+    slug: string;
+    focusKeywords: string;
+    status: string;
+    metaDescription: string;
 }
 
 const getTodayDate = () => new Date().toISOString().split('T')[0];
 
-const INITIAL_FORM_DATA: JobPost = {
-    title: '',
-    category: 'latest-jobs',
-    department: '',
-    postDate: getTodayDate(),
-    applyStartDate: '',
-    applyEndDate: '',
-    feeGeneral: '',
-    feeSCST: '',
-    ageMin: '18',
-    ageMax: '37',
-    totalPost: '',
-    eligibility: '',
-    applyLink: '',
-    loginLink: '',
-    notificationLink: '',
-    officialWebsite: '',
-    syllabusLink: '',
+const INITIAL_VACANCY: VacancyBreakdown = {
+    postNameZone: 'General Post',
+    ur: '0',
+    obc: '0',
+    sc: '0',
+    st: '0',
+    ews: '0',
+    total: '0'
 };
 
-export default function SecretAdminPanel() {
+const INITIAL_FORM_DATA: JobPost = {
+    title: '',
+    organization: '',
+    postName: '',
+    category: 'latest-jobs',
+    jobType: 'Government',
+    jobLocation: 'All India',
+    totalVacancy: '',
+
+    notificationDate: getTodayDate(),
+    applyStartDate: '',
+    applyEndDate: '',
+    feePaymentLastDate: '',
+    correctionLastDate: '',
+    examDate: '',
+    admitCardDate: '',
+    resultDate: '',
+
+    feeGeneral: 'Rs. 500/-',
+    feeSCST: 'Rs. 250/-',
+    feeEWS: 'Rs. 500/-',
+    feeMode: '',
+
+    educationalQualification: '',
+    ageMin: '18',
+    ageMax: '37',
+    ageRelaxation: 'As per rules',
+
+    salaryPayScale: 'Rs. 19,900 - 63,200/- (Level 1)',
+    gradePay: '1800 GP',
+    experienceRequired: 'Fresher Eligible',
+    selectionProcess: 'Written Exam -> Physical Test (PET) -> Document Verification -> Medical Exam',
+
+    vacancies: [{ ...INITIAL_VACANCY }],
+
+    thumbnailUrl: '',
+    notificationPdfUrl: '',
+
+    howToApply: `1. Visit the official website.\n2. Click on the Apply Online link.\n3. Complete the initial registration.\n4. Fill in the application form and upload required documents.\n5. Pay the application fee and submit the form.`,
+    applyLink: '',
+    officialWebsite: '',
+    notificationLink: '',
+    syllabusLink: '',
+    admitCardLink: '',
+    answerKeyLink: '',
+    resultLink: '',
+
+    seoTitle: '',
+    slug: '',
+    focusKeywords: 'RRB Group D, Railway Vacancy, Apply Online',
+    status: 'Published',
+    metaDescription: ''
+};
+
+export default function ZoomUpdateAdminPanel() {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [loginError, setLoginError] = useState('');
-    const [loginLoading, setLoginLoading] = useState(false);
 
     const [activeTab, setActiveTab] = useState<'create' | 'manage'>('create');
     const [jobs, setJobs] = useState<JobPost[]>([]);
     const [editingJobId, setEditingJobId] = useState<string | null>(null);
+
     const [searchQuery, setSearchQuery] = useState('');
-    const [isFetchingJobs, setIsFetchingJobs] = useState(false);
+    const [statusFilter, setStatusFilter] = useState('All');
 
     const [formData, setFormData] = useState<JobPost>(INITIAL_FORM_DATA);
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState('');
 
     const fetchJobs = async () => {
-        setIsFetchingJobs(true);
         try {
             const res = await fetch('/api/jobs');
             const data = await res.json();
@@ -72,51 +159,66 @@ export default function SecretAdminPanel() {
                 setJobs(data.data || []);
             }
         } catch (err) {
-            console.error('Failed to fetch jobs', err);
-        } finally {
-            setIsFetchingJobs(false);
+            console.error('Fetch Error:', err);
         }
     };
 
     useEffect(() => {
-        if (isAuthenticated) {
-            fetchJobs();
-        }
+        if (isAuthenticated) fetchJobs();
     }, [isAuthenticated]);
 
-    const handleLogin = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setLoginError('');
-        setLoginLoading(true);
-
-        try {
-            const res = await fetch('/api/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, password }),
-            });
-
-            const data = await res.json();
-
-            if (res.ok && data.success) {
-                setIsAuthenticated(true);
-                setUsername('');
-                setPassword('');
-            } else {
-                setLoginError('❌ ' + (data.message || 'Invalid Credentials!'));
-            }
-        } catch (err) {
-            setLoginError('❌ Server Connection Error.');
-        } finally {
-            setLoginLoading(false);
-        }
+    const generateSlug = (text: string) => {
+        return text
+            .toLowerCase()
+            .trim()
+            .replace(/[^\w\s-]/g, '')
+            .replace(/[\s_-]+/g, '-')
+            .replace(/^-+|-+$/g, '');
     };
 
     const handleChange = (
         e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
     ) => {
         const { name, value } = e.target;
-        setFormData((prev) => ({ ...prev, [name]: value }));
+        setFormData((prev) => {
+            const updated = { ...prev, [name]: value };
+            if (name === 'title' && !editingJobId) {
+                updated.slug = generateSlug(value);
+                updated.seoTitle = value;
+            }
+            return updated;
+        });
+    };
+
+    const handleVacancyChange = (index: number, field: keyof VacancyBreakdown, value: string) => {
+        const currentVacancies = formData.vacancies || [{ ...INITIAL_VACANCY }];
+        const updated = [...currentVacancies];
+        updated[index] = { ...updated[index], [field]: value };
+
+        const ur = parseInt(updated[index].ur || '0', 10);
+        const obc = parseInt(updated[index].obc || '0', 10);
+        const sc = parseInt(updated[index].sc || '0', 10);
+        const st = parseInt(updated[index].st || '0', 10);
+        const ews = parseInt(updated[index].ews || '0', 10);
+        updated[index].total = (ur + obc + sc + st + ews).toString();
+
+        setFormData((prev) => ({ ...prev, vacancies: updated }));
+    };
+
+    const addVacancyRow = () => {
+        setFormData((prev) => ({
+            ...prev,
+            vacancies: [...(prev.vacancies || []), { ...INITIAL_VACANCY }]
+        }));
+    };
+
+    const removeVacancyRow = (index: number) => {
+        const currentVacancies = formData.vacancies || [{ ...INITIAL_VACANCY }];
+        if (currentVacancies.length === 1) return;
+        setFormData((prev) => ({
+            ...prev,
+            vacancies: currentVacancies.filter((_, i) => i !== index)
+        }));
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -138,25 +240,27 @@ export default function SecretAdminPanel() {
             const data = await res.json();
 
             if (res.ok && data.success) {
-                setMessage(isEditing ? '✅ Job Post Updated Successfully!' : '✅ Job Post Created Successfully!');
+                setMessage(isEditing ? '✅ Job post updated successfully!' : '✅ New job post published successfully!');
                 resetForm();
                 fetchJobs();
                 if (isEditing) setActiveTab('manage');
             } else {
-                setMessage('❌ ' + (data.message || 'Error saving post.'));
+                setMessage('❌ Error: ' + (data.message || 'Failed to save data.'));
             }
         } catch (err) {
-            setMessage('❌ Server error occurred.');
+            setMessage('❌ Internal server error occurred.');
         } finally {
             setLoading(false);
         }
     };
 
     const handleEdit = (job: JobPost) => {
-        const id = job._id || job.id;
-        if (!id) return;
-        setEditingJobId(id);
-        setFormData(job);
+        setEditingJobId(job._id || job.id || null);
+        setFormData({
+            ...job,
+            status: (job.status === 'Public' || !job.status) ? 'Published' : job.status,
+            vacancies: job.vacancies && job.vacancies.length > 0 ? job.vacancies : [{ ...INITIAL_VACANCY }]
+        });
         setActiveTab('create');
         setMessage('');
     };
@@ -165,74 +269,87 @@ export default function SecretAdminPanel() {
         if (!confirm('Are you sure you want to delete this job post?')) return;
 
         try {
-            const res = await fetch(`/api/jobs/${id}`, {
-                method: 'DELETE',
-            });
+            const res = await fetch(`/api/jobs/${id}`, { method: 'DELETE' });
             const data = await res.json();
-
             if (res.ok && data.success) {
-                setMessage('✅ Post deleted successfully.');
+                setMessage('✅ Job post deleted successfully.');
                 fetchJobs();
-            } else {
-                alert('Failed to delete post: ' + (data.message || ''));
             }
         } catch (err) {
-            alert('Error deleting post.');
+            alert('Delete action failed.');
         }
     };
 
     const resetForm = () => {
-        setFormData({ ...INITIAL_FORM_DATA, postDate: getTodayDate() });
+        setFormData({ ...INITIAL_FORM_DATA, notificationDate: getTodayDate() });
         setEditingJobId(null);
     };
 
-    const filteredJobs = jobs.filter((job) =>
-        job.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        job.category.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    const handleLogin = (e: React.FormEvent) => {
+        e.preventDefault();
+        setLoginError('');
+
+        const envUsername = process.env.NEXT_PUBLIC_ADMIN_USERNAME || 'admin';
+        const envPassword = process.env.NEXT_PUBLIC_ADMIN_PASSWORD || 'zoom@123';
+
+        if (username.trim() === envUsername && password.trim() === envPassword) {
+            setIsAuthenticated(true);
+        } else {
+            setLoginError('Invalid Username or Password');
+        }
+    };
+
+    const filteredJobs = jobs.filter((job) => {
+        const matchesSearch = (job.title || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+                              (job.organization || '').toLowerCase().includes(searchQuery.toLowerCase());
+        
+        const isJobPublished = job.status === 'Published' || job.status === 'Public' || !job.status;
+        const isJobDraft = job.status === 'Draft';
+
+        let matchesStatus = true;
+        if (statusFilter === 'Published') {
+            matchesStatus = isJobPublished;
+        } else if (statusFilter === 'Draft') {
+            matchesStatus = isJobDraft;
+        }
+
+        return matchesSearch && matchesStatus;
+    });
 
     if (!isAuthenticated) {
         return (
-            <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
-                <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md border border-gray-200">
-                    <h2 className="text-xl font-bold text-center text-red-700 mb-2">
-                        ZOOM UPDATE - Secret Control Panel
+            <div className="min-h-screen bg-[#0b0f19] flex items-center justify-center p-4">
+                <div className="bg-white p-8 rounded-xl shadow-2xl w-full max-w-md border border-slate-700">
+                    <h2 className="text-2xl font-black text-center text-red-600 mb-1">
+                        ZOOM UPDATE ADMIN PANEL
                     </h2>
-                    <p className="text-xs text-gray-500 text-center mb-6">Authorized Personnel Only</p>
-
-                    {loginError && (
-                        <p className="text-red-600 text-xs font-bold mb-4 text-center bg-red-50 p-2 rounded border border-red-200">
-                            {loginError}
-                        </p>
-                    )}
-
+                    <p className="text-xs text-gray-500 text-center mb-6">Authorized Portal Access Only</p>
+                    {loginError && <p className="text-red-600 text-xs text-center mb-4 bg-red-50 p-2 rounded border border-red-200">{loginError}</p>}
                     <form onSubmit={handleLogin} className="space-y-4">
                         <div>
-                            <label className="block text-xs font-bold text-gray-700 mb-1">Admin ID</label>
+                            <label className="block text-xs font-bold text-gray-700 mb-1">Admin Username</label>
                             <input
                                 type="text"
                                 value={username}
                                 onChange={(e) => setUsername(e.target.value)}
-                                className="w-full border border-gray-300 rounded p-2 text-sm focus:outline-none focus:border-red-500"
+                                placeholder="Enter Username"
+                                className="w-full border rounded p-2 text-sm focus:ring-2 focus:ring-red-500 outline-none text-slate-800"
                                 required
                             />
                         </div>
                         <div>
-                            <label className="block text-xs font-bold text-gray-700 mb-1">Secret Key</label>
+                            <label className="block text-xs font-bold text-gray-700 mb-1">Password</label>
                             <input
                                 type="password"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
-                                className="w-full border border-gray-300 rounded p-2 text-sm focus:outline-none focus:border-red-500"
+                                placeholder="Enter Password"
+                                className="w-full border rounded p-2 text-sm focus:ring-2 focus:ring-red-500 outline-none text-slate-800"
                                 required
                             />
                         </div>
-                        <button
-                            type="submit"
-                            disabled={loginLoading}
-                            className="w-full bg-red-700 hover:bg-red-800 text-white font-bold py-2.5 rounded transition text-sm cursor-pointer disabled:opacity-50"
-                        >
-                            {loginLoading ? 'Verifying...' : 'Unlock Dashboard'}
+                        <button type="submit" className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2.5 rounded transition text-sm cursor-pointer">
+                            Unlock Dashboard
                         </button>
                     </form>
                 </div>
@@ -241,389 +358,609 @@ export default function SecretAdminPanel() {
     }
 
     return (
-        <div className="min-h-screen bg-gray-100 text-gray-900 pb-12">
-            <main className="max-w-5xl mx-auto px-4 py-8">
-                <div className="flex flex-col sm:flex-row justify-between items-center mb-6 bg-white p-4 rounded-lg shadow-sm border border-gray-200 gap-4">
-                    <h1 className="text-lg font-bold text-gray-800">FastJob Management Panel</h1>
+        <div className="min-h-screen bg-[#eaf0f6] text-slate-800 pb-16">
+            <header className="bg-[#0f172a] text-white py-3 px-6 shadow-md border-b border-slate-800">
+                <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
+                    <div className="flex items-center gap-3">
+                        <span className="bg-red-600 text-white font-black px-3 py-1 rounded text-sm tracking-wide">ZOOM UPDATE</span>
+                        <h1 className="font-bold text-xs md:text-sm text-slate-200">Admin Control Panel</h1>
+                    </div>
+
                     <div className="flex items-center gap-2">
                         <button
-                            onClick={() => {
-                                setActiveTab('create');
-                                resetForm();
-                            }}
-                            className={`px-4 py-2 rounded text-xs font-bold transition cursor-pointer ${
-                                activeTab === 'create'
-                                    ? 'bg-red-700 text-white'
-                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                            }`}
+                            onClick={() => { setActiveTab('create'); resetForm(); }}
+                            className={`px-3 py-1.5 rounded text-xs font-bold transition flex items-center gap-1 ${activeTab === 'create' ? 'bg-red-600 text-white' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'}`}
                         >
-                            + {editingJobId ? 'Edit Mode' : 'Add New Post'}
+                            ➕ Add New Post
                         </button>
                         <button
                             onClick={() => setActiveTab('manage')}
-                            className={`px-4 py-2 rounded text-xs font-bold transition cursor-pointer ${
-                                activeTab === 'manage'
-                                    ? 'bg-red-700 text-white'
-                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                            }`}
+                            className={`px-3 py-1.5 rounded text-xs font-bold transition flex items-center gap-1 ${activeTab === 'manage' ? 'bg-red-600 text-white' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'}`}
                         >
-                            Manage Posts ({jobs.length})
+                            📋 Manage Posts ({jobs.length})
                         </button>
                         <button
                             onClick={() => setIsAuthenticated(false)}
-                            className="bg-gray-800 text-white text-xs px-3 py-2 rounded font-semibold hover:bg-gray-900 transition cursor-pointer"
+                            className="bg-slate-800 hover:bg-slate-700 text-white text-xs px-3 py-1.5 rounded font-semibold transition"
                         >
                             Logout
                         </button>
                     </div>
                 </div>
+            </header>
 
+            <main className="max-w-7xl mx-auto px-4 py-6">
                 {message && (
-                    <div
-                        className={`mb-6 p-3 rounded text-sm font-semibold text-center ${
-                            message.includes('✅')
-                                ? 'bg-green-100 text-green-800 border border-green-300'
-                                : 'bg-red-100 text-red-800 border border-red-300'
-                        }`}
-                    >
+                    <div className={`mb-6 p-3 rounded text-xs font-bold text-center border ${message.includes('✅') ? 'bg-emerald-50 text-emerald-800 border-emerald-300' : 'bg-rose-50 text-rose-800 border-rose-300'}`}>
                         {message}
                     </div>
                 )}
 
-                {/* TAB 1: ADD / EDIT FORM */}
                 {activeTab === 'create' && (
-                    <div className="bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden">
-                        <div className="bg-red-700 text-white py-4 px-6 flex justify-between items-center">
-                            <h2 className="text-lg md:text-xl font-bold uppercase tracking-wide">
-                                {editingJobId ? '✏️ Edit Job Post' : '🚀 Post New Job Entry'}
+                    <div className="bg-white rounded shadow border border-slate-300 overflow-hidden">
+                        <div className="bg-[#0f172a] text-white py-2.5 px-4 flex justify-between items-center border-b border-slate-800">
+                            <h2 className="text-xs md:text-sm font-bold flex items-center gap-2">
+                                📌 {editingJobId ? 'Edit Job Post' : 'Create New Job Post'}
                             </h2>
                             {editingJobId && (
-                                <button
-                                    onClick={resetForm}
-                                    className="text-xs bg-white text-red-700 font-bold px-3 py-1 rounded hover:bg-gray-100"
-                                >
+                                <button onClick={resetForm} className="text-[11px] bg-red-600 hover:bg-red-700 text-white font-bold px-2.5 py-1 rounded">
                                     Cancel Edit
                                 </button>
                             )}
                         </div>
 
-                        <form onSubmit={handleSubmit} className="p-6 space-y-6">
-                            {/* 1. Basic Details */}
-                            <div className="space-y-4">
-                                <h3 className="text-sm font-bold text-red-600 uppercase border-b pb-1">
-                                    1. Basic Job Details
+                        <form onSubmit={handleSubmit} className="p-5 space-y-5 text-slate-800">
+                            
+                            {/* SECTION 1: JOB INFORMATION */}
+                            <div className="space-y-2.5">
+                                <h3 className="text-xs font-extrabold text-red-600 uppercase tracking-wide border-b border-red-500 pb-1">
+                                    1. 🏢 JOB INFORMATION
                                 </h3>
                                 <div>
-                                    <label className="block text-xs font-bold text-gray-700 mb-1">Job Title *</label>
+                                    <label className="block text-[11px] font-bold text-slate-700 mb-1">Job Title *</label>
                                     <input
                                         type="text"
                                         name="title"
                                         value={formData.title}
                                         onChange={handleChange}
+                                        placeholder="e.g. RRB Group D Recruitment 2026 Online Form"
                                         required
-                                        placeholder="e.g. Railway RRB Group D Online Form 2026"
-                                        className="w-full border border-gray-300 rounded p-2 text-sm focus:outline-none focus:border-red-500"
+                                        className="w-full border border-slate-400 rounded p-1.5 text-xs focus:ring-1 focus:ring-red-500 outline-none text-slate-800"
                                     />
                                 </div>
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
                                     <div>
-                                        <label className="block text-xs font-bold text-gray-700 mb-1">Category *</label>
+                                        <label className="block text-[11px] font-bold text-slate-700 mb-1">Organization / Department *</label>
+                                        <input
+                                            type="text"
+                                            name="organization"
+                                            value={formData.organization}
+                                            onChange={handleChange}
+                                            placeholder="e.g. Railway Recruitment Board (RRB)"
+                                            required
+                                            className="w-full border border-slate-400 rounded p-1.5 text-xs outline-none focus:ring-1 focus:ring-red-500 text-slate-800"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-[11px] font-bold text-slate-700 mb-1">Post Name *</label>
+                                        <input
+                                            type="text"
+                                            name="postName"
+                                            value={formData.postName}
+                                            onChange={handleChange}
+                                            placeholder="e.g. Track Maintainer, Assistant Pointsman"
+                                            required
+                                            className="w-full border border-slate-400 rounded p-1.5 text-xs outline-none focus:ring-1 focus:ring-red-500 text-slate-800"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-[11px] font-bold text-slate-700 mb-1">Category *</label>
                                         <select
                                             name="category"
                                             value={formData.category}
                                             onChange={handleChange}
-                                            className="w-full border border-gray-300 rounded p-2 text-sm focus:outline-none focus:border-red-500 bg-white"
+                                            className="w-full border border-slate-400 rounded p-1.5 text-xs bg-white outline-none focus:ring-1 focus:ring-red-500 font-semibold text-slate-800"
                                         >
-                                            
-                                            <option value="top-banner">🔥Top Banner Link</option>
-                                            <option value="latest-jobs">💼Latest Jobs</option>
-                                            <option value="admit-card">🎴Admit Card</option>
-                                            <option value="result">📊Result</option>
-                                            <option value="answer-key">🔑Answer Key</option>
-                                            <option value="syllabus">📚Syllabus</option>
-                                            <option value="admission">🎓Admission</option>
-                                            <option value="scholarship">🎓 Scholarship & Schemes</option>
+                                            <option value="latest-jobs">💼 Latest Jobs</option>
+                                            <option value="admit-card">🎴 Admit Card</option>
+                                            <option value="result">📊 Result</option>
+                                            <option value="answer-key">🔑 Answer Key</option>
+                                            <option value="syllabus">📚 Syllabus</option>
+                                            <option value="admission">🎓 Admission</option>
                                         </select>
                                     </div>
+
                                     <div>
-                                        <label className="block text-xs font-bold text-gray-700 mb-1">Department</label>
+                                        <label className="block text-[11px] font-bold text-slate-700 mb-1">Job Type *</label>
+                                        <select
+                                            name="jobType"
+                                            value={formData.jobType}
+                                            onChange={handleChange}
+                                            className="w-full border border-slate-400 rounded p-1.5 text-xs bg-white outline-none focus:ring-1 focus:ring-red-500 font-semibold text-slate-800"
+                                        >
+                                            <option value="Government">Government</option>
+                                            <option value="Private">Private</option>
+                                            <option value="Apprenticeship">Apprenticeship</option>
+                                            <option value="Internship">Internship</option>
+                                        </select>
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-[11px] font-bold text-slate-700 mb-1">Job Location</label>
                                         <input
                                             type="text"
-                                            name="department"
-                                            value={formData.department}
+                                            name="jobLocation"
+                                            value={formData.jobLocation}
                                             onChange={handleChange}
-                                            placeholder="e.g. Government Recruitment Examination 2026"
-                                            className="w-full border border-gray-300 rounded p-2 text-sm"
+                                            placeholder="All India"
+                                            className="w-full border border-slate-400 rounded p-1.5 text-xs outline-none text-slate-800"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-[11px] font-bold text-slate-700 mb-1">Total Vacancy *</label>
+                                        <input
+                                            type="text"
+                                            name="totalVacancy"
+                                            value={formData.totalVacancy}
+                                            onChange={handleChange}
+                                            placeholder="e.g. 32,000 Posts"
+                                            required
+                                            className="w-full border border-slate-400 rounded p-1.5 text-xs outline-none text-slate-800"
                                         />
                                     </div>
                                 </div>
                             </div>
 
-                            {/* 2. Dates, Fees & Posts */}
-                            <div className="space-y-4 pt-2">
-                                <h3 className="text-sm font-bold text-red-600 uppercase border-b pb-1">
-                                    2. Dates, Fees & Age Limit
+                            {/* SECTION 2: IMPORTANT DATES TIMELINE */}
+                            <div className="space-y-2.5">
+                                <h3 className="text-xs font-extrabold text-red-600 uppercase tracking-wide border-b border-red-500 pb-1">
+                                    2. 📅 IMPORTANT DATES TIMELINE
                                 </h3>
-                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2.5">
                                     <div>
-                                        <label className="block text-xs font-bold text-gray-700 mb-1">Post Date</label>
-                                        <input
-                                            type="date"
-                                            name="postDate"
-                                            value={formData.postDate}
-                                            onChange={handleChange}
-                                            className="w-full border border-gray-300 rounded p-2 text-sm"
-                                        />
+                                        <label className="block text-[11px] font-bold text-slate-700 mb-1">Notification Date</label>
+                                        <input type="date" name="notificationDate" value={formData.notificationDate} onChange={handleChange} className="w-full border border-slate-400 rounded p-1.5 text-xs text-slate-800" />
                                     </div>
                                     <div>
-                                        <label className="block text-xs font-bold text-gray-700 mb-1">Apply Start Date</label>
-                                        <input
-                                            type="date"
-                                            name="applyStartDate"
-                                            value={formData.applyStartDate}
-                                            onChange={handleChange}
-                                            className="w-full border border-gray-300 rounded p-2 text-sm"
-                                        />
+                                        <label className="block text-[11px] font-bold text-slate-700 mb-1">Apply Start Date</label>
+                                        <input type="date" name="applyStartDate" value={formData.applyStartDate} onChange={handleChange} className="w-full border border-slate-400 rounded p-1.5 text-xs text-slate-800" />
                                     </div>
                                     <div>
-                                        <label className="block text-xs font-bold text-gray-700 mb-1">Apply Last Date</label>
-                                        <input
-                                            type="date"
-                                            name="applyEndDate"
-                                            value={formData.applyEndDate}
-                                            onChange={handleChange}
-                                            className="w-full border border-gray-300 rounded p-2 text-sm"
-                                        />
-                                    </div>
-                                </div>
-
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-xs font-bold text-gray-700 mb-1">Fee (General / EBC / BC / EWS)</label>
-                                        <input
-                                            type="text"
-                                            name="feeGeneral"
-                                            value={formData.feeGeneral}
-                                            onChange={handleChange}
-                                            placeholder="e.g. Rs.500/-"
-                                            className="w-full border border-gray-300 rounded p-2 text-sm"
-                                        />
+                                        <label className="block text-[11px] font-bold text-slate-700 mb-1">Apply Last Date</label>
+                                        <input type="date" name="applyEndDate" value={formData.applyEndDate} onChange={handleChange} className="w-full border border-slate-400 rounded p-1.5 text-xs text-slate-800" />
                                     </div>
                                     <div>
-                                        <label className="block text-xs font-bold text-gray-700 mb-1">Fee (SC / ST / All Female)</label>
-                                        <input
-                                            type="text"
-                                            name="feeSCST"
-                                            value={formData.feeSCST}
-                                            onChange={handleChange}
-                                            placeholder="e.g. Rs.200/-"
-                                            className="w-full border border-gray-300 rounded p-2 text-sm"
-                                        />
-                                    </div>
-                                </div>
-
-                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                                    <div>
-                                        <label className="block text-xs font-bold text-gray-700 mb-1">Minimum Age</label>
-                                        <input
-                                            type="text"
-                                            name="ageMin"
-                                            value={formData.ageMin}
-                                            onChange={handleChange}
-                                            placeholder="18 Years"
-                                            className="w-full border border-gray-300 rounded p-2 text-sm"
-                                        />
+                                        <label className="block text-[11px] font-bold text-slate-700 mb-1">Fee Payment Last Date</label>
+                                        <input type="date" name="feePaymentLastDate" value={formData.feePaymentLastDate} onChange={handleChange} className="w-full border border-slate-400 rounded p-1.5 text-xs text-slate-800" />
                                     </div>
                                     <div>
-                                        <label className="block text-xs font-bold text-gray-700 mb-1">Maximum Age</label>
-                                        <input
-                                            type="text"
-                                            name="ageMax"
-                                            value={formData.ageMax}
-                                            onChange={handleChange}
-                                            placeholder="37 Years"
-                                            className="w-full border border-gray-300 rounded p-2 text-sm"
-                                        />
+                                        <label className="block text-[11px] font-bold text-slate-700 mb-1">Correction Date</label>
+                                        <input type="date" name="correctionLastDate" value={formData.correctionLastDate} onChange={handleChange} className="w-full border border-slate-400 rounded p-1.5 text-xs text-slate-800" />
                                     </div>
                                     <div>
-                                        <label className="block text-xs font-bold text-gray-700 mb-1">Total Post</label>
-                                        <input
-                                            type="text"
-                                            name="totalPost"
-                                            value={formData.totalPost}
-                                            onChange={handleChange}
-                                            placeholder="e.g. N/A or 5000"
-                                            className="w-full border border-gray-300 rounded p-2 text-sm"
-                                        />
+                                        <label className="block text-[11px] font-bold text-slate-700 mb-1">Exam Date</label>
+                                        <input type="text" name="examDate" value={formData.examDate} onChange={handleChange} placeholder="e.g. November 2026" className="w-full border border-slate-400 rounded p-1.5 text-xs text-slate-800" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[11px] font-bold text-slate-700 mb-1">Admit Card Date</label>
+                                        <input type="text" name="admitCardDate" value={formData.admitCardDate} onChange={handleChange} placeholder="Before Exam" className="w-full border border-slate-400 rounded p-1.5 text-xs text-slate-800" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[11px] font-bold text-slate-700 mb-1">Result Date</label>
+                                        <input type="text" name="resultDate" value={formData.resultDate} onChange={handleChange} placeholder="To Be Notified" className="w-full border border-slate-400 rounded p-1.5 text-xs text-slate-800" />
                                     </div>
                                 </div>
                             </div>
 
-                            {/* 3. Links & Details */}
-                            <div className="space-y-4 pt-2">
-                                <h3 className="text-sm font-bold text-red-600 uppercase border-b pb-1">
-                                    3. Links & Details
+                            {/* SECTION 3: APPLICATION FEE */}
+                            <div className="space-y-2.5">
+                                <h3 className="text-xs font-extrabold text-red-600 uppercase tracking-wide border-b border-red-500 pb-1">
+                                    3. 💰 APPLICATION FEE
+                                </h3>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2.5">
+                                    <div>
+                                        <label className="block text-[11px] font-bold text-slate-700 mb-1">General / OBC / EBC</label>
+                                        <input type="text" name="feeGeneral" value={formData.feeGeneral} onChange={handleChange} className="w-full border border-slate-400 rounded p-1.5 text-xs text-slate-800" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[11px] font-bold text-slate-700 mb-1">SC / ST / Female</label>
+                                        <input type="text" name="feeSCST" value={formData.feeSCST} onChange={handleChange} className="w-full border border-slate-400 rounded p-1.5 text-xs text-slate-800" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[11px] font-bold text-slate-700 mb-1">EWS Fee</label>
+                                        <input type="text" name="feeEWS" value={formData.feeEWS} onChange={handleChange} className="w-full border border-slate-400 rounded p-1.5 text-xs text-slate-800" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[11px] font-bold text-slate-700 mb-1">Payment Mode</label>
+                                        <input type="text" name="feeMode" value={formData.feeMode} onChange={handleChange} placeholder="Online / Offline" className="w-full border border-slate-400 rounded p-1.5 text-xs text-slate-800" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* SECTION 4: QUALIFICATION & AGE LIMIT */}
+                            <div className="space-y-2.5">
+                                <h3 className="text-xs font-extrabold text-red-600 uppercase tracking-wide border-b border-red-500 pb-1">
+                                    4. 🎓 QUALIFICATION & AGE LIMIT
                                 </h3>
                                 <div>
-                                    <label className="block text-xs font-bold text-gray-700 mb-1">Eligibility Details</label>
+                                    <label className="block text-[11px] font-bold text-slate-700 mb-1">Educational Qualification *</label>
                                     <textarea
-                                        name="eligibility"
-                                        rows={2}
-                                        value={formData.eligibility}
+                                        name="educationalQualification"
+                                        value={formData.educationalQualification}
                                         onChange={handleChange}
-                                        placeholder="10th Pass / Graduation in any stream..."
-                                        className="w-full border border-gray-300 rounded p-2 text-sm"
+                                        rows={2}
+                                        placeholder="Class 10th Pass / 12th Pass / ITI Diploma / Bachelor Degree from recognized board or university."
+                                        required
+                                        className="w-full border border-slate-400 rounded p-1.5 text-xs outline-none text-slate-800"
                                     />
                                 </div>
-
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                                     <div>
-                                        <label className="block text-xs font-bold text-gray-700 mb-1">Apply Online Link</label>
-                                        <input
-                                            type="url"
-                                            name="applyLink"
-                                            value={formData.applyLink}
-                                            onChange={handleChange}
-                                            placeholder="https://..."
-                                            className="w-full border border-gray-300 rounded p-2 text-sm"
-                                        />
+                                        <label className="block text-[11px] font-bold text-slate-700 mb-1">Minimum Age</label>
+                                        <input type="text" name="ageMin" value={formData.ageMin} onChange={handleChange} className="w-full border border-slate-400 rounded p-1.5 text-xs text-slate-800" />
                                     </div>
                                     <div>
-                                        <label className="block text-xs font-bold text-gray-700 mb-1">Applicant Login Link</label>
-                                        <input
-                                            type="url"
-                                            name="loginLink"
-                                            value={formData.loginLink || ''}
-                                            onChange={handleChange}
-                                            placeholder="https://..."
-                                            className="w-full border border-gray-300 rounded p-2 text-sm"
-                                        />
+                                        <label className="block text-[11px] font-bold text-slate-700 mb-1">Maximum Age</label>
+                                        <input type="text" name="ageMax" value={formData.ageMax} onChange={handleChange} className="w-full border border-slate-400 rounded p-1.5 text-xs text-slate-800" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[11px] font-bold text-slate-700 mb-1">Age Relaxation</label>
+                                        <input type="text" name="ageRelaxation" value={formData.ageRelaxation} onChange={handleChange} className="w-full border border-slate-400 rounded p-1.5 text-xs text-slate-800" />
                                     </div>
                                 </div>
+                            </div>
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {/* SECTION 5: SALARY & SELECTION PROCESS */}
+                            <div className="space-y-2.5">
+                                <h3 className="text-xs font-extrabold text-red-600 uppercase tracking-wide border-b border-red-500 pb-1">
+                                    5. 💵 SALARY & SELECTION PROCESS
+                                </h3>
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                                     <div>
-                                        <label className="block text-xs font-bold text-gray-700 mb-1">Download Notification Link</label>
-                                        <input
-                                            type="url"
-                                            name="notificationLink"
-                                            value={formData.notificationLink}
-                                            onChange={handleChange}
-                                            placeholder="https://..."
-                                            className="w-full border border-gray-300 rounded p-2 text-sm"
-                                        />
+                                        <label className="block text-[11px] font-bold text-slate-700 mb-1">Salary / Pay Scale</label>
+                                        <input type="text" name="salaryPayScale" value={formData.salaryPayScale} onChange={handleChange} className="w-full border border-slate-400 rounded p-1.5 text-xs text-slate-800" />
                                     </div>
                                     <div>
-                                        <label className="block text-xs font-bold text-gray-700 mb-1">Official Website Link</label>
-                                        <input
-                                            type="url"
-                                            name="officialWebsite"
-                                            value={formData.officialWebsite}
-                                            onChange={handleChange}
-                                            placeholder="https://..."
-                                            className="w-full border border-gray-300 rounded p-2 text-sm"
-                                        />
+                                        <label className="block text-[11px] font-bold text-slate-700 mb-1">Grade Pay</label>
+                                        <input type="text" name="gradePay" value={formData.gradePay} onChange={handleChange} className="w-full border border-slate-400 rounded p-1.5 text-xs text-slate-800" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[11px] font-bold text-slate-700 mb-1">Experience Required</label>
+                                        <input type="text" name="experienceRequired" value={formData.experienceRequired} onChange={handleChange} className="w-full border border-slate-400 rounded p-1.5 text-xs text-slate-800" />
                                     </div>
                                 </div>
-
                                 <div>
-                                    <label className="block text-xs font-bold text-gray-700 mb-1">Download Syllabus Link</label>
-                                    <input
-                                        type="url"
-                                        name="syllabusLink"
-                                        value={formData.syllabusLink || ''}
+                                    <label className="block text-[11px] font-bold text-slate-700 mb-1">Selection Process</label>
+                                    <textarea
+                                        name="selectionProcess"
+                                        value={formData.selectionProcess}
                                         onChange={handleChange}
-                                        placeholder="https://..."
-                                        className="w-full border border-gray-300 rounded p-2 text-sm"
+                                        rows={2}
+                                        className="w-full border border-slate-400 rounded p-1.5 text-xs outline-none text-slate-800"
                                     />
                                 </div>
                             </div>
 
-                            <div className="pt-4 text-center flex justify-end gap-3">
-                                {editingJobId && (
+                            {/* SECTION 6: VACANCY DETAILS BREAKDOWN */}
+                            <div className="space-y-2.5">
+                                <div className="flex justify-between items-center border-b border-red-500 pb-1">
+                                    <h3 className="text-xs font-extrabold text-red-600 uppercase tracking-wide">
+                                        6. 📊 VACANCY DETAILS BREAKDOWN
+                                    </h3>
                                     <button
                                         type="button"
-                                        onClick={resetForm}
-                                        className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2.5 px-6 rounded transition text-sm cursor-pointer"
+                                        onClick={addVacancyRow}
+                                        className="text-[10px] bg-[#0f172a] hover:bg-slate-800 text-white font-bold px-2 py-0.5 rounded transition"
                                     >
-                                        Cancel
+                                        + Add Category Row
                                     </button>
-                                )}
-                                <button
-                                    type="submit"
-                                    disabled={loading}
-                                    className="bg-green-600 hover:bg-green-700 text-white font-bold py-2.5 px-10 rounded transition shadow text-sm cursor-pointer disabled:opacity-50"
-                                >
-                                    {loading ? 'Saving...' : editingJobId ? '💾 Save Changes' : '🚀 Publish Job Post'}
-                                </button>
+                                </div>
+
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-xs text-left border border-slate-300">
+                                        <thead className="bg-slate-100 text-slate-700 uppercase font-bold border-b border-slate-300 text-[10px]">
+                                            <tr>
+                                                <th className="p-1.5 border-r border-slate-300">POST NAME / ZONE</th>
+                                                <th className="p-1.5 border-r border-slate-300 text-center w-14">UR</th>
+                                                <th className="p-1.5 border-r border-slate-300 text-center w-14">OBC</th>
+                                                <th className="p-1.5 border-r border-slate-300 text-center w-14">SC</th>
+                                                <th className="p-1.5 border-r border-slate-300 text-center w-14">ST</th>
+                                                <th className="p-1.5 border-r border-slate-300 text-center w-14">EWS</th>
+                                                <th className="p-1.5 border-r border-slate-300 text-center w-16">TOTAL</th>
+                                                <th className="p-1.5 text-center w-14">ACTION</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {formData.vacancies?.map((vac, index) => (
+                                                <tr key={index} className="border-b border-slate-200 hover:bg-slate-50">
+                                                    <td className="p-1 border-r border-slate-200">
+                                                        <input
+                                                            type="text"
+                                                            value={vac.postNameZone}
+                                                            onChange={(e) => handleVacancyChange(index, 'postNameZone', e.target.value)}
+                                                            className="w-full p-1 border border-slate-300 rounded text-slate-800"
+                                                        />
+                                                    </td>
+                                                    <td className="p-1 border-r border-slate-200">
+                                                        <input
+                                                            type="number"
+                                                            value={vac.ur}
+                                                            onChange={(e) => handleVacancyChange(index, 'ur', e.target.value)}
+                                                            className="w-full p-1 border border-slate-300 rounded text-center text-slate-800"
+                                                        />
+                                                    </td>
+                                                    <td className="p-1 border-r border-slate-200">
+                                                        <input
+                                                            type="number"
+                                                            value={vac.obc}
+                                                            onChange={(e) => handleVacancyChange(index, 'obc', e.target.value)}
+                                                            className="w-full p-1 border border-slate-300 rounded text-center text-slate-800"
+                                                        />
+                                                    </td>
+                                                    <td className="p-1 border-r border-slate-200">
+                                                        <input
+                                                            type="number"
+                                                            value={vac.sc}
+                                                            onChange={(e) => handleVacancyChange(index, 'sc', e.target.value)}
+                                                            className="w-full p-1 border border-slate-300 rounded text-center text-slate-800"
+                                                        />
+                                                    </td>
+                                                    <td className="p-1 border-r border-slate-200">
+                                                        <input
+                                                            type="number"
+                                                            value={vac.st}
+                                                            onChange={(e) => handleVacancyChange(index, 'st', e.target.value)}
+                                                            className="w-full p-1 border border-slate-300 rounded text-center text-slate-800"
+                                                        />
+                                                    </td>
+                                                    <td className="p-1 border-r border-slate-200">
+                                                        <input
+                                                            type="number"
+                                                            value={vac.ews}
+                                                            onChange={(e) => handleVacancyChange(index, 'ews', e.target.value)}
+                                                            className="w-full p-1 border border-slate-300 rounded text-center text-slate-800"
+                                                        />
+                                                    </td>
+                                                    <td className="p-1 border-r border-slate-200">
+                                                        <input
+                                                            type="text"
+                                                            value={vac.total}
+                                                            readOnly
+                                                            className="w-full p-1 border border-slate-300 rounded bg-slate-100 font-bold text-center text-slate-800"
+                                                        />
+                                                    </td>
+                                                    <td className="p-1 text-center">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => removeVacancyRow(index)}
+                                                            className="text-red-600 hover:text-red-800 text-[11px] font-semibold"
+                                                        >
+                                                            Remove
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
+
+                            {/* SECTION 7: THUMBNAIL & PDF DOCUMENT LINKS */}
+                            <div className="space-y-2.5">
+                                <h3 className="text-xs font-extrabold text-red-600 uppercase tracking-wide border-b border-red-500 pb-1">
+                                    7. 🖼️ THUMBNAIL & PDF DOCUMENT LINKS
+                                </h3>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                                    <div>
+                                        <label className="block text-[11px] font-bold text-slate-700 mb-1">Job Banner / Thumbnail URL (1200x630)</label>
+                                        <input
+                                            type="url"
+                                            name="thumbnailUrl"
+                                            value={formData.thumbnailUrl}
+                                            onChange={handleChange}
+                                            placeholder="https://domain.com/images/banner.jpg"
+                                            className="w-full border border-slate-400 rounded p-1.5 text-xs text-slate-800"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[11px] font-bold text-slate-700 mb-1">Official Notification PDF Link</label>
+                                        <input
+                                            type="url"
+                                            name="notificationPdfUrl"
+                                            value={formData.notificationPdfUrl}
+                                            onChange={handleChange}
+                                            placeholder="https://domain.com/docs/notification.pdf"
+                                            className="w-full border border-slate-400 rounded p-1.5 text-xs text-slate-800"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* SECTION 8: IMPORTANT LINKS & HOW TO APPLY */}
+                            <div className="space-y-2.5">
+                                <h3 className="text-xs font-extrabold text-red-600 uppercase tracking-wide border-b border-red-500 pb-1">
+                                    8. 🔗 IMPORTANT LINKS & HOW TO APPLY
+                                </h3>
+                                <div>
+                                    <label className="block text-[11px] font-bold text-slate-700 mb-1">How to Apply Steps</label>
+                                    <textarea
+                                        name="howToApply"
+                                        value={formData.howToApply}
+                                        onChange={handleChange}
+                                        rows={4}
+                                        className="w-full border border-slate-400 rounded p-2 text-xs outline-none text-slate-800 font-mono"
+                                    />
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-4 gap-2.5">
+                                    <div>
+                                        <label className="block text-[11px] font-bold text-slate-700 mb-1">Apply Online Link *</label>
+                                        <input type="url" name="applyLink" value={formData.applyLink} onChange={handleChange} required placeholder="https://..." className="w-full border border-slate-400 rounded p-1.5 text-xs text-slate-800" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[11px] font-bold text-slate-700 mb-1">Official Website Link *</label>
+                                        <input type="url" name="officialWebsite" value={formData.officialWebsite} onChange={handleChange} required placeholder="https://..." className="w-full border border-slate-400 rounded p-1.5 text-xs text-slate-800" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[11px] font-bold text-slate-700 mb-1">Notification Link *</label>
+                                        <input type="url" name="notificationLink" value={formData.notificationLink} onChange={handleChange} required placeholder="https://..." className="w-full border border-slate-400 rounded p-1.5 text-xs text-slate-800" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[11px] font-bold text-slate-700 mb-1">Syllabus Link</label>
+                                        <input type="url" name="syllabusLink" value={formData.syllabusLink} onChange={handleChange} placeholder="https://..." className="w-full border border-slate-400 rounded p-1.5 text-xs text-slate-800" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[11px] font-bold text-slate-700 mb-1">Admit Card Link</label>
+                                        <input type="url" name="admitCardLink" value={formData.admitCardLink} onChange={handleChange} placeholder="https://..." className="w-full border border-slate-400 rounded p-1.5 text-xs text-slate-800" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[11px] font-bold text-slate-700 mb-1">Answer Key Link</label>
+                                        <input type="url" name="answerKeyLink" value={formData.answerKeyLink} onChange={handleChange} placeholder="https://..." className="w-full border border-slate-400 rounded p-1.5 text-xs text-slate-800" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[11px] font-bold text-slate-700 mb-1">Result Link</label>
+                                        <input type="url" name="resultLink" value={formData.resultLink} onChange={handleChange} placeholder="https://..." className="w-full border border-slate-400 rounded p-1.5 text-xs text-slate-800" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* SECTION 9: SEO SETTINGS (SEARCH ENGINE OPTIMIZATION) */}
+                            <div className="space-y-2.5">
+                                <h3 className="text-xs font-extrabold text-red-600 uppercase tracking-wide border-b border-red-500 pb-1">
+                                    9. 🔍 SEO SETTINGS (SEARCH ENGINE OPTIMIZATION)
+                                </h3>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                                    <div>
+                                        <label className="block text-[11px] font-bold text-slate-700 mb-1">SEO Meta Title</label>
+                                        <input type="text" name="seoTitle" value={formData.seoTitle} onChange={handleChange} className="w-full border border-slate-400 rounded p-1.5 text-xs text-slate-800" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[11px] font-bold text-slate-700 mb-1">URL Slug</label>
+                                        <input type="text" name="slug" value={formData.slug} onChange={handleChange} className="w-full border border-slate-400 rounded p-1.5 text-xs text-slate-800" />
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                                    <div>
+                                        <label className="block text-[11px] font-bold text-slate-700 mb-1">Focus Keywords (Comma Separated)</label>
+                                        <input type="text" name="focusKeywords" value={formData.focusKeywords} onChange={handleChange} className="w-full border border-slate-400 rounded p-1.5 text-xs text-slate-800" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[11px] font-bold text-slate-700 mb-1">Post Status</label>
+                                        <select
+                                            name="status"
+                                            value={formData.status}
+                                            onChange={handleChange}
+                                            className="w-full border border-slate-400 rounded p-1.5 text-xs bg-white font-bold text-emerald-700 outline-none"
+                                        >
+                                            <option value="Published" className="text-emerald-700">🟢 Published</option>
+                                            <option value="Draft" className="text-amber-700">🟠 Draft</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="block text-[11px] font-bold text-slate-700 mb-1">Meta Description (150 - 160 Characters)</label>
+                                    <textarea
+                                        name="metaDescription"
+                                        value={formData.metaDescription}
+                                        onChange={handleChange}
+                                        rows={2}
+                                        className="w-full border border-slate-400 rounded p-2 text-xs outline-none text-slate-800"
+                                    />
+                                </div>
+                            </div>
+
+                            <button
+                                type="submit"
+                                disabled={loading}
+                                className="w-full bg-red-600 hover:bg-red-700 text-white font-black py-2.5 rounded text-xs tracking-wider transition cursor-pointer shadow flex items-center justify-center gap-1.5 uppercase"
+                            >
+                                🚀 {loading ? 'PROCESSING...' : editingJobId ? 'SAVE CHANGES' : 'PUBLISH JOB POST'}
+                            </button>
                         </form>
                     </div>
                 )}
 
-                {/* TAB 2: MANAGE POSTS */}
                 {activeTab === 'manage' && (
-                    <div className="bg-white rounded-lg shadow-md border border-gray-200 p-6">
-                        <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-3">
-                            <h2 className="text-lg font-bold text-gray-800">All Active Job Posts</h2>
-                            <input
-                                type="text"
-                                placeholder="🔍 Search posts..."
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                className="border border-gray-300 rounded p-2 text-sm w-full sm:w-64 focus:outline-none focus:border-red-500"
-                            />
+                    <div className="bg-white rounded shadow border border-slate-300 overflow-hidden">
+                        <div className="p-3 bg-[#0f172a] text-white flex flex-col md:flex-row gap-2.5 justify-between items-center">
+                            <h2 className="font-bold text-xs md:text-sm">📋 Manage Existing Posts</h2>
+                            <div className="flex items-center gap-2 w-full md:w-auto">
+                                <input
+                                    type="text"
+                                    placeholder="Search by title..."
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    className="p-1.5 text-xs rounded border border-slate-600 bg-[#1e293b] text-white placeholder-slate-400 outline-none w-full md:w-56 focus:border-red-500"
+                                />
+                                <select
+                                    value={statusFilter}
+                                    onChange={(e) => setStatusFilter(e.target.value)}
+                                    className="p-1.5 text-xs rounded border border-slate-600 bg-[#1e293b] text-white font-semibold outline-none focus:border-red-500"
+                                >
+                                    <option value="All" className="bg-[#1e293b] text-white">All Status</option>
+                                    <option value="Published" className="bg-[#1e293b] text-white">Published</option>
+                                    <option value="Draft" className="bg-[#1e293b] text-white">Draft</option>
+                                </select>
+                            </div>
                         </div>
 
-                        {isFetchingJobs ? (
-                            <p className="text-center text-sm text-gray-500 py-8">Loading posts...</p>
-                        ) : filteredJobs.length === 0 ? (
-                            <p className="text-center text-sm text-gray-500 py-8">No matching posts found.</p>
-                        ) : (
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-left border-collapse text-xs md:text-sm">
-                                    <thead>
-                                        <tr className="bg-gray-100 border-b text-gray-700">
-                                            <th className="p-3">Title</th>
-                                            <th className="p-3">Category</th>
-                                            <th className="p-3">Post Date</th>
-                                            <th className="p-3 text-right">Actions</th>
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-xs text-left border-collapse">
+                                <thead className="bg-slate-100 text-slate-700 uppercase font-bold border-b border-slate-300 text-[10px]">
+                                    <tr>
+                                        <th className="p-2.5 border-r border-slate-200">Title</th>
+                                        <th className="p-2.5 border-r border-slate-200">Organization</th>
+                                        <th className="p-2.5 border-r border-slate-200">Category</th>
+                                        <th className="p-2.5 border-r border-slate-200">Status</th>
+                                        <th className="p-2.5 text-center">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {filteredJobs.length === 0 ? (
+                                        <tr>
+                                            <td colSpan={5} className="text-center p-6 text-gray-500 font-medium">
+                                                No posts found matching your search.
+                                            </td>
                                         </tr>
-                                    </thead>
-                                    <tbody>
-                                        {filteredJobs.map((job) => {
-                                            const id = job._id || job.id || '';
-                                            return (
-                                                <tr key={id} className="border-b hover:bg-gray-50">
-                                                    <td className="p-3 font-semibold text-gray-900">{job.title}</td>
-                                                    <td className="p-3 text-gray-600">
-                                                        <span className="bg-red-50 text-red-700 px-2 py-0.5 rounded font-bold uppercase text-[10px]">
-                                                            {job.category}
-                                                        </span>
-                                                    </td>
-                                                    <td className="p-3 text-gray-500">{job.postDate}</td>
-                                                    <td className="p-3 text-right space-x-2">
+                                    ) : (
+                                        filteredJobs.map((job) => (
+                                            <tr key={job._id || job.id} className="border-b border-slate-200 hover:bg-slate-50">
+                                                <td className="p-2.5 font-bold text-slate-800 border-r border-slate-200">{job.title}</td>
+                                                <td className="p-2.5 text-slate-600 border-r border-slate-200">{job.organization}</td>
+                                                <td className="p-2.5 text-slate-600 uppercase font-semibold border-r border-slate-200">{job.category}</td>
+                                                <td className="p-2.5 border-r border-slate-200">
+                                                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${job.status === 'Draft' ? 'bg-amber-100 text-amber-800 border border-amber-300' : 'bg-emerald-100 text-emerald-800 border border-emerald-300'}`}>
+                                                        {job.status === 'Draft' ? 'Draft' : 'Published'}
+                                                    </span>
+                                                </td>
+                                                <td className="p-2.5 text-center">
+                                                    <div className="flex justify-center gap-1.5">
                                                         <button
                                                             onClick={() => handleEdit(job)}
-                                                            className="text-blue-600 hover:underline font-semibold"
+                                                            className="bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-bold px-2 py-1 rounded"
                                                         >
                                                             Edit
                                                         </button>
                                                         <button
-                                                            onClick={() => handleDelete(id)}
-                                                            className="text-red-600 hover:underline font-semibold"
+                                                            onClick={() => handleDelete(job._id || job.id || '')}
+                                                            className="bg-red-600 hover:bg-red-700 text-white text-[10px] font-bold px-2 py-1 rounded"
                                                         >
                                                             Delete
                                                         </button>
-                                                    </td>
-                                                </tr>
-                                            );
-                                        })}
-                                    </tbody>
-                                </table>
-                            </div>
-                        )}
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 )}
             </main>
