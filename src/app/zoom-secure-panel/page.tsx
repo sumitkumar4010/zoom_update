@@ -22,7 +22,7 @@ export interface JobPost {
     jobType: string;
     jobLocation: string;
     totalVacancy: string;
-    
+
     notificationDate: string;
     applyStartDate: string;
     applyEndDate: string;
@@ -301,8 +301,8 @@ export default function ZoomUpdateAdminPanel() {
 
     const filteredJobs = jobs.filter((job) => {
         const matchesSearch = (job.title || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-                              (job.organization || '').toLowerCase().includes(searchQuery.toLowerCase());
-        
+            (job.organization || '').toLowerCase().includes(searchQuery.toLowerCase());
+
         const isJobPublished = job.status === 'Published' || job.status === 'Public' || !job.status;
         const isJobDraft = job.status === 'Draft';
 
@@ -410,7 +410,7 @@ export default function ZoomUpdateAdminPanel() {
                         </div>
 
                         <form onSubmit={handleSubmit} className="p-5 space-y-5 text-slate-800">
-                            
+
                             {/* SECTION 1: JOB INFORMATION */}
                             <div className="space-y-2.5">
                                 <h3 className="text-xs font-extrabold text-red-600 uppercase tracking-wide border-b border-red-500 pb-1">
@@ -456,7 +456,7 @@ export default function ZoomUpdateAdminPanel() {
                                         />
                                     </div>
 
-                                    <div>
+                                    <div className="md:col-span-1">
                                         <label className="block text-[11px] font-bold text-slate-700 mb-1">Category *</label>
                                         <select
                                             name="category"
@@ -464,12 +464,19 @@ export default function ZoomUpdateAdminPanel() {
                                             onChange={handleChange}
                                             className="w-full border border-slate-400 rounded p-1.5 text-xs bg-white outline-none focus:ring-1 focus:ring-red-500 font-semibold text-slate-800"
                                         >
-                                            <option value="latest-jobs">💼 Latest Jobs</option>
+                                            <option value="top-banner">🔥 Top Banner</option>
                                             <option value="admit-card">🎴 Admit Card</option>
+                                            <option value="current-job">💼 Current Job</option>
                                             <option value="result">📊 Result</option>
                                             <option value="answer-key">🔑 Answer Key</option>
                                             <option value="syllabus">📚 Syllabus</option>
                                             <option value="admission">🎓 Admission</option>
+                                            <option value="university-update">🏛️ University Update</option>
+                                            <option value="scholarship">🎓 Scholarship</option>
+                                            <option value="upcoming-job">🔮 Upcoming Job</option>
+                                            <option value="sarkari-yojana">📜 Sarkari Yojana</option>
+                                            <option value="documents">📁 Documents</option>
+                                            <option value="latest-blog">✍️ Latest Blog</option>
                                         </select>
                                     </div>
 
